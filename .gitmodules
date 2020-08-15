@@ -1,0 +1,3 @@
+[submodule "modules/parsertongue"]
+	path = modules/parsertongue
+	url = https://github.com/TimZoet/parsertongue-module.git
