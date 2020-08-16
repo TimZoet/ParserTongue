@@ -1,14 +1,41 @@
 # ParserTongue
-A modern C++20 argument parser.
+ParserTongue is a C++20 argument parser. Its name was blatantly stolen from a joke I read online. It was developed with 
+three things in mind:
 
-* An unambiguous interface, both for the user of the command line and you, the developer.
-* Parsing the arguments passed by the user will never throw an exception. Instead, all parse errors can be inspected 
+1. It should have an easy to use, unambiguous interface, both for the user of the command line and you, the developer.
+2. Parsing the arguments passed by the user will never throw an exception. Instead, all parse errors can be inspected 
   and you can decide whether and how the application continues.
-* At the same time, constructing an invalid parser (with duplicate argument names or other such problems) will most 
+3. At the same time, constructing an invalid parser (with duplicate argument names or other such problems) will most 
   definitely throw exceptions to prevent nasty bugs.
 
-3 types of values (flag, value, list). Anything that can be converted from string or stringstream can be used as value.
-Nice help functions, etc.
+Using the library is simple. First, you create a [parser](#parser) object to which you then add arguments. There are 3 
+types of arguments:
+1. [Flags](#flags): boolean options that are enabled when the user passes their name.
+2. [Values](#values): arguments of any type that can be converted from a string.
+3. [Lists](#lists): lists of values.
+
+Additionally, you can retrieve [operands](#operands), which are values passed by the user without a preceding argument.
+You can also set [version](#version) and [help](#help) information that is displayed when the user requests it.
+
+## Build Instructions
+The main project repository contains git submodules, and should therefore be cloned as follows:
+```
+git clone https://github.com/TimZoet/ParserTongue.git target_dir --recurse-submodules
+```
+The CMake structure is based on a template that can be found here: https://github.com/TimZoet/cmake-template. To build 
+the example application, enable the `BUILD_EXAMPLES` option.
+
+To use ParserTongue in your project, you should:
+* Make the `cmake/*.cmake` files accessible from the `CMAKE_MODULE_PATH`;
+* Add the contents (excluding the `.git` file) of `modules/parsertongue` to your project;
+* Link your targets to the `parsertongue` library;
+* `#include "parsertongue/parser.h"`;
+* Start using the `pt::parser` class.
+
+ParserTongue has been tested with:
+* MSVC 19.27
+* GCC 10.1
+* Clang 10.0
 
 ## Parser
 Step one is creating a `parser` object. The constructor takes the argument count and strings as parameters. After that,
@@ -21,8 +48,8 @@ If the user requested the version information or help, you should not run your p
 `display_help` method, which also prints out the requested information.
 
 If the user passed invalid arguments (unknown flags, missing values after `=`, or anything else that could not be 
-parsed) the error is recorded. All errors can be retrieved using the `errors` method. You could then inspect them, log 
-them, display them to the user, etc.
+parsed) the error is recorded. All errors can be retrieved using the `get_errors` method. You could then inspect them, 
+log them, display them to the user, etc.
 
 ```cpp
 int main(int argc, char** argv)
@@ -30,7 +57,7 @@ int main(int argc, char** argv)
     // Create a parser.
     auto parser = pt::parser(argc, argv);
 
-    // Here you will create all flags, values, etc.
+    // Add arguments, set help and version info, etc.
     ...
     
     // Run the parser.
@@ -47,19 +74,20 @@ int main(int argc, char** argv)
     
     // There might have been non-fatal parse errors because the user passed invalid arguments.
     // You can inspect them, display them, or perhaps terminate the program.
-    if (!parser.errors().empty())
+    if (!parser.get_errors().empty())
         parser.display_errors(std::cout);
     
-    // Do something with the parsed values and run your program.
+    // Do something with the parsed values and run program.
     ...
 }
 ```
-Also, trying to retrieve any parsed value before invoking the parser, invoking the parser 
-a second time, and adding new flags or changing parser properties after parsing will throw an exception.
+Trying to retrieve any parsed value before invoking the parser, invoking the parser a second time, and adding new 
+arguments or changing parser properties after parsing will throw an exception.
 
-If you want you can retrieve the full string that was passed by the user.
+If you want you can retrieve all arguments or the full string that was passed by the user.
 ```cpp
-std::string s = parser.full_string();
+std::vector<std::string> args = parser.get_arguments();
+std::string s = parser.get_full_string();
 ```
 On practically all platforms the program name is the first value in `argv`. Just in case that isn't true for the 
 platform you work with, there is an optional third parameter that, if set to true, will deal with that problem.
@@ -75,26 +103,26 @@ uppercase characters are allowed. The short names `v` and `h`, as well as the lo
 reserved.
 ```cpp
 // Valid argument names.
-auto flag0 = parser.flag('x', "longName");          // Argument with short and long name.
-auto flag1 = parser.flag('y');                      // Argument with just a short name.
-auto flag2 = parser.flag('\0', "longest_name");     // Argument without short name and underscores in long name.
+auto flag0 = parser.add_flag('x', "longName");          // Argument with short and long name.
+auto flag1 = parser.add_flag('y');                      // Argument with just a short name.
+auto flag2 = parser.add_flag('\0', "longest_name");     // Argument without short name and underscores in long name.
                                                     
 // These names will result in an exception.
-auto badFlag = parser.flag('5');                    // Not alphabetic.
-auto badFlag = parser.flag(..., "some5Name%");      // Not alphabetic + underscores.
-auto badFlag = parser.flag('x');                    // Already in use.
-auto badFlag = parser.flag(..., "longName");        // Already in use.
-auto badFlag = parser.flag(..., "a");               // Length below 2.
-auto badFlag = parser.flag('\0', "");               // Both names empty.
-auto badFlag = parser.flag('h', "help");            // Reserved names.
+auto badFlag = parser.add_flag('5');                    // Not alphabetic.
+auto badFlag = parser.add_flag(..., "some5Name%");      // Not alphabetic + underscores.
+auto badFlag = parser.add_flag('x');                    // Already in use.
+auto badFlag = parser.add_flag(..., "longName");        // Already in use.
+auto badFlag = parser.add_flag(..., "a");               // Length below 2.
+auto badFlag = parser.add_flag('\0', "");               // Both names empty.
+auto badFlag = parser.add_flag('v', "help");            // Reserved names.
 ```
 
 ## Flags
 Flags are boolean arguments that are set when the user passes their short or long name. They can be added using the 
-`flag` method which returns a pointer to access the state after parsing:
+`add_flag` method which returns a pointer to access the state after parsing:
 ```cpp
-auto flagX = parser.flag('x', "longName");
-auto flagY = parser.flag('y');
+auto flagX = parser.add_flag('x', "longName");
+auto flagY = parser.add_flag('y');
 ```
 Checking if a flag was set is straightforward:
 ```cpp
@@ -116,11 +144,11 @@ Flag y was set
 ```
 
 ## Values
-Values are arguments of any type that can be converted from a string. They can be added using the `value` method which
-takes a template parameter defining what the string value is parsed as:
+Values are arguments of any type that can be converted from a string. They can be added using the `add_value` method 
+which takes a template parameter defining what the string value is parsed as:
 ```cpp
-auto stringValue = parser->value<std::string>('s');
-auto intValue    = parser->value<int>('i', "integer");
+auto stringValue = parser.add_value<std::string>('s');
+auto intValue    = parser.add_value<int>('i', "integer");
 ```
 Before getting the value you must first verify that it was set:
 ```cpp
@@ -168,17 +196,17 @@ Integer was not set
 ```
 
 ## Lists
-Lists are arguments to which more than one value can be assigned. They can be added using the `list` method 
+Lists are arguments to which more than one value can be assigned. They can be added using the `add_list` method 
 which takes a template parameter defining what the string value is parsed as:
 
 ```cpp
-auto files = parser->list<std::string>('f', "files");
+auto files = parser.add_list<std::string>('f', "files");
 ```
 Before getting the values you must first verify that anything was set:
 ```cpp
 if (files->is_set())
 {
-    for (const auto& f : files->get_value())
+    for (const auto& f : files->get_values())
         std::cout << f << std::endl;
 }
 ```
@@ -190,7 +218,7 @@ name are added to the list.
 *or*
 > app -f=foo.txt,bar.txt
 *or*
-> app --files foo.txt bar.txt --someOtherArg foo
+> app --files foo.txt bar.txt --someOtherArg baz.txt
 *or*
 > app --files=foo.txt,bar.txt
 foo.txt
@@ -214,9 +242,9 @@ bar.txt
 
 ## Operands
 Operands are all values passed by the user that do not start with a `-` and are not assigned to an argument. They can be
-retrieved with the `operands` method:
+retrieved with the `get_operands` method:
 ```cpp
-for (const auto& op : parser.operands())
+for (const auto& op : parser.get_operands())
     std::cout << op << std::endl;
 ```
 Operands are not automatically converted to any type. You can only retrieve them as strings.
@@ -228,7 +256,7 @@ op2
 op3
 ```
 
-## Version Info
+## Version
 There are several properties you can set that are displayed when the user requests version information: `name`, 
 `version` and `description`. As stated before, you should end the program when the user requests the version:
 ```cpp
@@ -236,9 +264,9 @@ There are several properties you can set that are displayed when the user reques
 ...
 
 // Set version info.
-parser.name("My App");
-parser.version("3.0");
-parser.description("A short description of what the application does.");
+parser.set_name("My App");
+parser.set_version("3.0");
+parser.set_description("A short description of what the application does.");
 
 // Run parser.
 ...
@@ -266,10 +294,10 @@ You can set a help string on each argument that is displayed when the user reque
 optional longer help string. This string is displayed instead of the short string when the user requests the help for
 a specific argument: 
 ```cpp
-auto flag = parser.flag('f', "flag");
-auto list = parser.list('\0', "filenames");
-flag->help("Short help for flag", "Longer, more detailed help for flag");
-list->help("Short help for filenames");
+auto flag = parser.add_flag('f', "flag");
+auto list = parser.add_list<std::string>('\0', "filenames");
+flag->set_help("Short help for flag", "Longer, more detailed help for flag");
+list->set_help("Short help for filenames");
 ```
 The user can request the help in a similar manner as the version information:
 ```
@@ -288,7 +316,7 @@ if (parser.display_help(std::cout), 20, 60)
     return 0;
 ```
 The user can request the help for a specific argument by passing its name. For convenience, the name can be in any form: 
-short, long, with or without preceding dash(es).If no long help string was set, the short help string is displayed.
+short, long, with or without preceding dash(es). If no long help string was set, the short help string is displayed.
 ```
 > app help f
 *or*

@@ -6,7 +6,7 @@ set(SRC_DIR "src")
 set(HEADERS
 	
 )
- 
+
 set(SOURCES
 	${SRC_DIR}/main.cpp
 )
@@ -15,4 +15,4 @@ set(DEPS_PUBLIC
 	parsertongue
 )
 
-make_target(TYPE ${TYPE} NAME ${NAME} STARTUP HEADERS "${HEADERS}" SOURCES "${SOURCES}" DEPS_PUBLIC "${DEPS_PUBLIC}")
+make_target(TYPE ${TYPE} NAME ${NAME} EXAMPLE STARTUP HEADERS "${HEADERS}" SOURCES "${SOURCES}" DEPS_PUBLIC "${DEPS_PUBLIC}")

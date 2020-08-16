@@ -22,7 +22,7 @@ include(MakeTarget)
 # Add subdirectories.
 ################################################################################
 
-add_subdirectory(applications)
+add_subdirectory(examples)
 add_subdirectory(modules)
 
 # Can run these after add_subdirectory calls.
