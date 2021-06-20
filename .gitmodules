@@ -1,3 +1,6 @@
 [submodule "cmake"]
 	path = cmake
 	url = git@github.com:TimZoet/cmake-module.git
+[submodule "modules/parsertongue"]
+	path = modules/parsertongue
+	url = git@github.com:TimZoet/parsertongue-module.git
