@@ -19,6 +19,7 @@ int main(int argc, char** argv)
     // Add some value arguments.
     auto value0 = parser.add_value<int32_t>('x', "valueX");
     auto value1 = parser.add_value<float>('y');
+    value0->add_options(10, 100, 1000);
     value1->set_default(33.33f);
 
     // Add some list arguments.
