@@ -6,7 +6,9 @@ set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "_CMakePredefinedTargets"
 # Project.
 ################################################################################
 
-project(ParserTongue VERSION 0.1.0 LANGUAGES CXX)
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/modules/parsertongue")
+include(ParserTongueVersionString)
+project(ParserTongue VERSION ${PARSERTONGUE_VERSION} LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
@@ -14,7 +16,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # CMake modules.
 ################################################################################
 
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_BINARY_DIR};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(InstallTarget)
 include(ISA)
 include(MakeTarget)
 
@@ -24,12 +27,6 @@ include(MakeTarget)
 
 add_subdirectory(examples)
 add_subdirectory(modules)
-
-# Can run these after add_subdirectory calls.
-# get_property(TARGETS_ALL GLOBAL PROPERTY TARGETS_ALL)
-# get_property(TARGETS_APPLICATIONS GLOBAL PROPERTY TARGETS_APPLICATIONS)
-# get_property(TARGETS_MODULES GLOBAL PROPERTY TARGETS_MODULES)
-# get_property(TARGETS_TESTS GLOBAL PROPERTY TARGETS_TESTS)
 
 ################################################################################
 # Set startup project.
