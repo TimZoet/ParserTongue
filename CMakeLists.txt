@@ -25,8 +25,10 @@ include(MakeTarget)
 # Add subdirectories.
 ################################################################################
 
-add_subdirectory(examples)
 add_subdirectory(modules)
+if (BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif()
 
 ################################################################################
 # Set startup project.
