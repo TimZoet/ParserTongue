@@ -1,5 +1,3 @@
-include(parsertongueVersionString)
-
 set(NAME parsertongue)
 set(TYPE module)
 set(INCLUDE_DIR "include/parsertongue")
