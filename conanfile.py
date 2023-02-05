@@ -1,4 +1,5 @@
-from conans import ConanFile
+from conan import ConanFile
+from conan.tools.files import copy
 
 class ParserTongueConan(ConanFile):
     ############################################################################
@@ -39,12 +40,12 @@ class ParserTongueConan(ConanFile):
     ############################################################################
     
     def export_sources(self):
-        self.copy("CMakeLists.txt")
-        self.copy("license")
-        self.copy("readme.md")
-        self.copy("cmake/*")
-        self.copy("modules/CMakeLists.txt")
-        self.copy("modules/parsertongue/*")
+        copy(self, "CMakeLists.txt", self.recipe_folder, self.export_sources_folder)
+        copy(self, "license", self.recipe_folder, self.export_sources_folder)
+        copy(self, "readme.md", self.recipe_folder, self.export_sources_folder)
+        copy(self, "cmake/*", self.recipe_folder, self.export_sources_folder)
+        copy(self, "modules/CMakeLists.txt", self.recipe_folder, self.export_sources_folder)
+        copy(self, "modules/parsertongue/*", self.recipe_folder, self.export_sources_folder)
     
     def config_options(self):
         base = self.python_requires["pyreq"].module.BaseConan
@@ -66,6 +67,11 @@ class ParserTongueConan(ConanFile):
         
         deps = base.generate_deps(self)
         deps.generate()
+    
+    def configure_cmake(self):
+        base = self.python_requires["pyreq"].module.BaseConan
+        cmake = base.configure_cmake(self)
+        return cmake
 
     def build(self):
         base = self.python_requires["pyreq"].module.BaseConan
