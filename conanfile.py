@@ -26,7 +26,7 @@ class ParserTongueConan(ConanFile):
     
     def set_version(self):
         base = self.python_requires["pyreq"].module.BaseConan
-        base.set_version(self, "modules/parsertongue/parsertongueVersionString.cmake", "PARSERTONGUE_VERSION")
+        base.set_version(self, "parsertongueVersionString.cmake", "PARSERTONGUE_VERSION")
     
     def init(self):
         base = self.python_requires["pyreq"].module.BaseConan
