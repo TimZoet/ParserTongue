@@ -35,11 +35,13 @@ namespace pt
 
         base_value(const char short_name, std::string long_name) : argument(short_name, std::move(long_name)) {}
 
-        virtual ~base_value() = default;
+        ~base_value() noexcept override = default;
 
         base_value& operator=(const base_value&) = delete;
 
         base_value& operator=(base_value&&) = delete;
+
+        void reset() override { valid = false; }
 
     protected:
         bool valid = false;
@@ -61,7 +63,7 @@ namespace pt
 
         value(const char short_name, std::string long_name) : base_value(short_name, std::move(long_name)) {}
 
-        virtual ~value() = default;
+        ~value() noexcept override = default;
 
         value& operator=(const value&) = delete;
 
@@ -113,6 +115,12 @@ namespace pt
         void add_options(Ts... values)
         {
             (add_option(std::move(values)), ...);
+        }
+
+        void reset() override
+        {
+            base_value::reset();
+            v.reset();
         }
 
     protected:

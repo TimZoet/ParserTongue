@@ -30,7 +30,7 @@ namespace pt
 
         flag(char short_name, std::string long_name);
 
-        virtual ~flag() = default;
+        ~flag() noexcept override = default;
 
         flag& operator=(const flag&) = delete;
 
@@ -41,6 +41,8 @@ namespace pt
          * \return True if the flag was set, false otherwise.
          */
         [[nodiscard]] bool is_set() const;
+
+        void reset() override;
 
     private:
         bool valid = false;

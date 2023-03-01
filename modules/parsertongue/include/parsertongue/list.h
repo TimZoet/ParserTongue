@@ -4,6 +4,7 @@
 // Standard includes.
 ////////////////////////////////////////////////////////////////
 
+#include <format>
 #include <sstream>
 #include <vector>
 
@@ -33,11 +34,13 @@ namespace pt
 
         base_list(const char short_name, std::string long_name) : argument(short_name, std::move(long_name)) {}
 
-        virtual ~base_list() = default;
+        ~base_list() noexcept override = default;
 
         base_list& operator=(const base_list&) = delete;
 
         base_list& operator=(base_list&&) = delete;
+
+        void reset() override { valid = false; }
 
     protected:
         bool valid = false;
@@ -61,7 +64,7 @@ namespace pt
 
         list(const char short_name, std::string long_name) : base_list(short_name, std::move(long_name)) {}
 
-        virtual ~list() = default;
+        ~list() noexcept override = default;
 
         list& operator=(const list&) = delete;
 
@@ -83,7 +86,7 @@ namespace pt
          */
         [[nodiscard]] const std::vector<T>& get_values() const
         {
-            if (!is_set()) throw parser_tongue_exception("Cannot retrieve value before running the parser");
+            if (!is_set()) throw parser_tongue_exception(std::format("{0} was not set", get_pretty_name()));
             return values;
         }
 
@@ -92,6 +95,12 @@ namespace pt
          * \param c Delimiter.
          */
         void set_delimiter(const char c) noexcept { delimiter = c; }
+
+        void reset() override
+        {
+            base_list::reset();
+            values.clear();
+        }
 
     protected:
         void parse(const std::string& arg, std::vector<parse_error_t>& parse_errors) noexcept override

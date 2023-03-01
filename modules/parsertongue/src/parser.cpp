@@ -6,6 +6,21 @@
 
 #include <algorithm>
 #include <cctype>
+#include <format>
+
+////////////////////////////////////////////////////////////////
+// Platform specific includes.
+////////////////////////////////////////////////////////////////
+
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <shellapi.h>
+#include <stringapiset.h>
+#include <WinBase.h>
+#else
+#include <wordexp.h>
+#endif
 
 using namespace std::string_literals;
 
@@ -16,6 +31,8 @@ namespace pt
         arguments.reserve(noProgramName ? static_cast<size_t>(argc) : static_cast<size_t>(argc) - 1);
         for (size_t i = noProgramName ? 0 : 1; i < static_cast<size_t>(argc); i++) arguments.emplace_back(argv[i]);
     }
+
+    parser::parser(const std::string& args, const bool noProgramName) { reset(args, noProgramName); }
 
     void parser::set_name(std::string app_name) { name = std::move(app_name); }
 
@@ -110,21 +127,18 @@ namespace pt
                 argument_ptr ptr;
                 if (short_name != '\0')
                 {
-                    const auto it0 = flags.find(short_name);
-                    if (it0 != flags.end()) ptr = it0->second;
-                    const auto it1 = ptr ? values.end() : values.find(short_name);
-                    if (it1 != values.end()) ptr = it1->second;
-                    const auto it2 = ptr ? lists.end() : lists.find(short_name);
-                    if (it2 != lists.end()) ptr = it2->second;
+                    if (const auto it = flags.find(short_name); it != flags.end()) ptr = it->second;
+                    if (const auto it = ptr ? values.end() : values.find(short_name); it != values.end())
+                        ptr = it->second;
+                    if (const auto it = ptr ? lists.end() : lists.find(short_name); it != lists.end()) ptr = it->second;
                 }
                 else if (!long_name.empty())
                 {
-                    const auto it0 = flags_long.find(long_name);
-                    if (it0 != flags_long.end()) ptr = it0->second;
-                    const auto it1 = ptr ? values_long.end() : values_long.find(long_name);
-                    if (it1 != values_long.end()) ptr = it1->second;
-                    const auto it2 = ptr ? lists_long.end() : lists_long.find(long_name);
-                    if (it2 != lists_long.end()) ptr = it2->second;
+                    if (const auto it = flags_long.find(long_name); it != flags_long.end()) ptr = it->second;
+                    if (const auto it = ptr ? values_long.end() : values_long.find(long_name); it != values_long.end())
+                        ptr = it->second;
+                    if (const auto it = ptr ? lists_long.end() : lists_long.find(long_name); it != lists_long.end())
+                        ptr = it->second;
                 }
 
                 // Print long help if it is not empty, otherwise print short help.
@@ -210,7 +224,6 @@ namespace pt
         return false;
     }
 
-
     void parser::display_errors(std::ostream& out) const
     {
         if (!parsed) throw parser_tongue_exception("Cannot display errors before running the parser"s);
@@ -239,6 +252,51 @@ namespace pt
         }
 
         return true;
+    }
+
+    void parser::reset(const std::string& args, const bool noProgramName)
+    {
+        parsed = false;
+        arguments.clear();
+        operands.clear();
+        parse_errors.clear();
+        requested_version = false;
+        requested_help    = false;
+
+        for (const auto& arg : argument_objects) arg->reset();
+
+#ifdef WIN32
+        const auto   wchars_num = MultiByteToWideChar(CP_UTF8, 0, args.c_str(), -1, nullptr, 0);
+        std::wstring wargs(wchars_num, 0);
+        MultiByteToWideChar(CP_UTF8, 0, args.c_str(), -1, wargs.data(), wchars_num);
+        int32_t argc = 0;
+        auto*   x    = CommandLineToArgvW(wargs.c_str(), &argc);
+        arguments.reserve(noProgramName ? static_cast<size_t>(argc) : static_cast<size_t>(argc) - 1);
+        for (int32_t i = noProgramName ? 0 : 1; i < argc; i++)
+        {
+            const auto  num = WideCharToMultiByte(CP_UTF8, 0, x[i], -1, nullptr, 0, nullptr, nullptr);
+            std::string y(num - 1, 0);
+            WideCharToMultiByte(CP_UTF8, 0, x[i], -1, y.data(), num - 1, nullptr, nullptr);
+            arguments.emplace_back(std::move(y));
+        }
+
+        LocalFree(x);
+#else
+        wordexp_t words;
+
+        if (wordexp(args.c_str(), &words, 0) == 0)
+        {
+            for (size_t i = noProgramName ? 0 : 1; i < words.we_wordc; i++)
+                arguments.emplace_back(std::string(words.we_wordv[i]));
+        }
+        else
+        {
+            wordfree(&words);
+            throw parser_tongue_exception("Failed not parse string: \"{}\" "s, args);
+        }
+
+        wordfree(&words);
+#endif
     }
 
     void parser::run()
@@ -330,7 +388,7 @@ namespace pt
     void parser::check_names(const char         short_name,
                              const std::string& long_name,
                              bool&              use_short_name,
-                             bool&              use_long_name)
+                             bool&              use_long_name) const
     {
         if (short_name != '\0')
         {
@@ -371,12 +429,10 @@ namespace pt
         if (!use_short_name && !use_long_name) throw parser_tongue_exception("Must pass at least one name"s);
 
         // Check if names are in use.
-        if (use_short_name && (flags.find(short_name) != flags.end() || values.find(short_name) != values.end() ||
-                               lists.find(short_name) != lists.end()))
+        if (use_short_name && (flags.contains(short_name) || values.contains(short_name) || lists.contains(short_name)))
             throw parser_tongue_exception("The short name is already in use"s);
         if (use_long_name &&
-            (flags_long.find(long_name) != flags_long.end() || values_long.find(long_name) != values_long.end() ||
-             lists_long.find(long_name) != lists_long.end()))
+            (flags_long.contains(long_name) || values_long.contains(long_name) || lists_long.contains(long_name)))
             throw parser_tongue_exception("The long name is already in use"s);
     }
 
@@ -393,26 +449,23 @@ namespace pt
             }
 
             // Try to find flag.
-            const auto it = flags.find(arg[1]);
-            if (it != flags.end())
+            if (const auto it = flags.find(arg[1]); it != flags.end())
             {
                 it->second->value = true;
                 return;
             }
 
             // Try to find value.
-            const auto it2 = values.find(arg[1]);
-            if (it2 != values.end())
+            if (const auto it = values.find(arg[1]); it != values.end())
             {
-                active_value = it2->second;
+                active_value = it->second;
                 return;
             }
 
             // Try to find list.
-            const auto it3 = lists.find(arg[1]);
-            if (it3 != lists.end())
+            if (const auto it = lists.find(arg[1]); it != lists.end())
             {
-                active_list = it3->second;
+                active_list = it->second;
                 return;
             }
 
@@ -422,10 +475,8 @@ namespace pt
         // Argument can be a list of 2 or more flags or a value or list followed directly by its value(s).
         else
         {
-            const auto equals = arg.find_first_of('=');
-
             // Argument is a value or list.
-            if (equals != std::string::npos)
+            if (const auto equals = arg.find_first_of('='); equals != std::string::npos)
             {
                 if (equals == arg.size() - 1)
                 {
@@ -442,18 +493,16 @@ namespace pt
                 }
 
                 // Try to find value.
-                const auto it = values.find(arg[1]);
-                if (it != values.end())
+                if (const auto it = values.find(arg[1]); it != values.end())
                 {
                     it->second->parse(arg.substr(3, arg.size() - 3), parse_errors);
                     return;
                 }
 
                 // Try to find list.
-                const auto it2 = lists.find(arg[1]);
-                if (it2 != lists.end())
+                if (const auto it = lists.find(arg[1]); it != lists.end())
                 {
-                    it2->second->parse(arg.substr(3, arg.size() - 3), parse_errors);
+                    it->second->parse(arg.substr(3, arg.size() - 3), parse_errors);
                     return;
                 }
 
@@ -472,10 +521,8 @@ namespace pt
                     continue;
                 }
 
-                auto it = flags.find(arg[i]);
-
                 // Enable flag.
-                if (it != flags.end())
+                if (auto it = flags.find(arg[i]); it != flags.end())
                 {
                     it->second->value = true;
                     continue;
@@ -496,14 +543,12 @@ namespace pt
             return;
         }
 
-        const auto equals = arg.find_first_of('=');
-
         // Argument is value or list followed directly by its value(s).
-        if (equals != std::string::npos)
+        if (const auto equals = arg.find_first_of('='); equals != std::string::npos)
         {
-            if (!std::all_of(arg.begin() + 3, arg.begin() + equals, [](const char c) {
-                    return std::isalpha(static_cast<unsigned char>(c)) || c == '_';
-                }))
+            if (!std::all_of(arg.begin() + 3,
+                             arg.begin() + static_cast<std::make_signed_t<size_t>>(equals),
+                             [](const char c) { return std::isalpha(static_cast<unsigned char>(c)) || c == '_'; }))
             {
                 parse_errors.emplace_back(parse_error::invalid_long_name,
                                           arg,
@@ -520,18 +565,16 @@ namespace pt
             const auto long_name = arg.substr(2, equals - 2);
 
             // Try to find value.
-            const auto it2 = values_long.find(long_name);
-            if (it2 != values_long.end())
+            if (const auto it = values_long.find(long_name); it != values_long.end())
             {
-                it2->second->parse(arg.substr(equals + 1, arg.size() - equals - 1), parse_errors);
+                it->second->parse(arg.substr(equals + 1, arg.size() - equals - 1), parse_errors);
                 return;
             }
 
             // Try to find list.
-            const auto it3 = lists_long.find(long_name);
-            if (it3 != lists_long.end())
+            if (const auto it = lists_long.find(long_name); it != lists_long.end())
             {
-                it3->second->parse(arg.substr(equals + 1, arg.size() - equals - 1), parse_errors);
+                it->second->parse(arg.substr(equals + 1, arg.size() - equals - 1), parse_errors);
                 return;
             }
 
@@ -553,26 +596,23 @@ namespace pt
             const auto long_name = arg.substr(2, arg.size() - 2);
 
             // Try to find flag.
-            const auto it = flags_long.find(long_name);
-            if (it != flags_long.end())
+            if (const auto it = flags_long.find(long_name); it != flags_long.end())
             {
                 it->second->value = true;
                 return;
             }
 
             // Try to find value.
-            const auto it2 = values_long.find(long_name);
-            if (it2 != values_long.end())
+            if (const auto it = values_long.find(long_name); it != values_long.end())
             {
-                active_value = it2->second;
+                active_value = it->second;
                 return;
             }
 
             // Try to find list.
-            const auto it3 = lists_long.find(long_name);
-            if (it3 != lists_long.end())
+            if (const auto it = lists_long.find(long_name); it != lists_long.end())
             {
-                active_list = it3->second;
+                active_list = it->second;
                 return;
             }
 

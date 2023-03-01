@@ -13,4 +13,10 @@ namespace pt
         if (!valid) throw parser_tongue_exception("Cannot retrieve value before running the parser"s);
         return value;
     }
+
+    void flag::reset()
+    {
+        valid = false;
+        value = false;
+    }
 }  // namespace pt

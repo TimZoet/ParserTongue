@@ -2,7 +2,7 @@
 
 #include "parsertongue/parser.h"
 
-int main(int argc, char** argv)
+int main(const int argc, char** argv)
 {
     // Create parser.
     auto parser = pt::parser(argc, argv);
@@ -13,18 +13,18 @@ int main(int argc, char** argv)
     parser.set_description("Some short description");
 
     // Add some flag arguments.
-    auto flag0 = parser.add_flag('a', "longName");
-    auto flag1 = parser.add_flag('b');
+    const auto flag0 = parser.add_flag('a', "longName");
+    const auto flag1 = parser.add_flag('b');
 
     // Add some value arguments.
-    auto value0 = parser.add_value<int32_t>('x', "valueX");
-    auto value1 = parser.add_value<float>('y');
+    const auto value0 = parser.add_value<int32_t>('x', "valueX");
+    const auto value1 = parser.add_value<float>('y');
     value0->add_options(10, 100, 1000);
     value1->set_default(33.33f);
 
     // Add some list arguments.
-    auto list0 = parser.add_list<std::string>('f', "filenames");
-    auto list1 = parser.add_list<double>('d', "doubles");
+    const auto list0 = parser.add_list<std::string>('f', "filenames");
+    const auto list1 = parser.add_list<double>('d', "doubles");
 
     // Set help on some of the arguments.
     flag0->set_help("This flag does something", "Long help");
@@ -32,8 +32,7 @@ int main(int argc, char** argv)
     value0->set_help("A very very very very very very very very long help string for this value");
 
     // Run the parser and test for unexpected errors.
-    std::string e;
-    if (!parser(e))
+    if (std::string e; !parser(e))
     {
         std::cout << "Internal parsing error: " << e << std::endl;
         return 0;

@@ -34,6 +34,14 @@ namespace pt
          */
         parser(int argc, char** argv, bool noProgramName = false);
 
+        /**
+         * \brief Construct a new parser from a std::string. Will perform parsing of the string using the current platform implementation.
+         * \param args Argument string.
+         * \param noProgramName If false, the first argument in args is the program name.
+         * If true, the first argument is part of the complete argument string.
+         */
+        explicit parser(const std::string& args, bool noProgramName = false);
+
         parser(const parser&) = delete;
 
         parser(parser&&) = default;
@@ -151,10 +159,19 @@ namespace pt
          */
         bool operator()(std::string& error);
 
+        /**
+         * \brief Reset the parser with a new string. Will perform parsing of the string using the current platform implementation. All arguments are reset as well. Parser must be run again.
+         * \param args Argument string.
+         * \param noProgramName If false, the first argument in args is the program name.
+         * If true, the first argument is part of the complete argument string.
+         */
+        void reset(const std::string& args, bool noProgramName);
+
     private:
         void run();
 
-        void check_names(char short_name, const std::string& long_name, bool& use_short_name, bool& use_long_name);
+        void
+          check_names(char short_name, const std::string& long_name, bool& use_short_name, bool& use_long_name) const;
 
         void parse_short_name(const std::string& arg, value_ptr& active_value, list_ptr& active_list);
 

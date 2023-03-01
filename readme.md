@@ -1,6 +1,6 @@
 # ParserTongue
 
-ParserTongue is a C++20 argument parser. Its name was blatantly stolen from a joke I read online. It was developed with
+ParserTongue is a C++23 argument parser. Its name was blatantly stolen from a joke I read online. It was developed with
 three things in mind:
 
 1. It should have an easy to use, unambiguous interface, both for the user of the command line and you, the developer.
@@ -105,6 +105,13 @@ platform you work with, there is an optional third parameter that, if set to tru
 
 ```cpp
 auto parser = pt::parser(argc, argv, true);
+```
+
+You can always :code:`reset` and then rerun the parser with a new string. Note that resetting will invalidate all arguments.
+
+```cpp
+parser.reset("--flag -x -y=10", true);
+if (!parser(e)) { ... }
 ```
 
 ## Argument Names

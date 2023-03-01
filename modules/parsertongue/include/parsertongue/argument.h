@@ -44,8 +44,10 @@ namespace pt
 
         void add_relevant_argument(argument& arg, bool required);
 
+        virtual void reset() = 0;
+
     protected:
-        std::string get_pretty_name() const;
+        [[nodiscard]] std::string get_pretty_name() const;
 
         char        short_name = '\0';
         std::string long_name;
