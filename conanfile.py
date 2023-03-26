@@ -16,7 +16,7 @@ class ParserTongueConan(ConanFile):
     ## Settings.                                                              ##
     ############################################################################
 
-    python_requires = "pyreq/1.0.0@timzoet/stable"
+    python_requires = "pyreq/1.0.0@timzoet/github_actions"
     
     python_requires_extend = "pyreq.BaseConan"
     
