@@ -16,7 +16,7 @@ class ParserTongueConan(ConanFile):
     ## Settings.                                                              ##
     ############################################################################
 
-    python_requires = "pyreq/1.0.0@timzoet/stable"
+    python_requires = "pyreq/1.0.0@timzoet/github_actions"
     
     python_requires_extend = "pyreq.BaseConan"
     
@@ -30,10 +30,8 @@ class ParserTongueConan(ConanFile):
     
     def init(self):
         base = self.python_requires["pyreq"].module.BaseConan
-        self.generators = base.generators + self.generators
-        self.settings = base.settings + self.settings
-        self.options = {**base.options, **self.options}
-        self.default_options = {**base.default_options, **self.default_options}
+        self.settings = base.settings
+        self.options.update(base.options, base.default_options)
     
     ############################################################################
     ## Building.                                                              ##
@@ -47,7 +45,6 @@ class ParserTongueConan(ConanFile):
         copy(self, "modules/*", self.recipe_folder, self.export_sources_folder)
     
     def config_options(self):
-        base = self.python_requires["pyreq"].module.BaseConan
         if self.settings.os == "Windows":
             del self.options.fPIC
     
@@ -73,12 +70,10 @@ class ParserTongueConan(ConanFile):
         return cmake
 
     def build(self):
-        base = self.python_requires["pyreq"].module.BaseConan
-        cmake = base.configure_cmake(self)
+        cmake = self.configure_cmake()
         cmake.configure()
         cmake.build()
 
     def package(self):
-        base = self.python_requires["pyreq"].module.BaseConan
-        cmake = base.configure_cmake(self)
+        cmake = self.configure_cmake()
         cmake.install()

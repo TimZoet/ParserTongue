@@ -21,28 +21,7 @@ You can also set [version](#version) and [help](#help) information that is displ
 
 ## Build Instructions
 
-The main project repository contains git submodules, and should therefore be cloned as follows:
-
-```sh
-git clone https://github.com/TimZoet/ParserTongue.git target_dir --recurse-submodules
-```
-
-The CMake structure is based on a template that can be found here: https://github.com/TimZoet/cmake-template. To build
-the example application, enable the `BUILD_EXAMPLES` option.
-
-To use ParserTongue in your project, you should:
-
-* Make the `cmake/*.cmake` files accessible from the `CMAKE_MODULE_PATH`;
-* Add the contents (excluding the `.git` file) of `modules/parsertongue` to your project;
-* Link your targets to the `parsertongue` library;
-* `#include "parsertongue/parser.h"`;
-* Start using the `pt::parser` class.
-
-ParserTongue has been tested with:
-
-* MSVC 19.27
-* GCC 10.1
-* Clang 10.0
+For building, exporting and installing please refer to the [build instructions](build_instructions.md).
 
 ## Parser
 
