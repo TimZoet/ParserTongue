@@ -1,5 +1,10 @@
 # Version History
 
+## 1.3.0 - April 2023
+
+* Upgraded to Conan 2.0.
+* Improved build instructions.
+
 ## 1.2.0 - March 2023
 
 * Upgraded C++ standard to 23.

@@ -8,7 +8,7 @@ class ParserTongueConan(ConanFile):
     
     name = "parsertongue"
     
-    description = "ParserTongue is a C++20 argument parser."
+    description = "ParserTongue is a C++23 argument parser."
 
     url = "https://github.com/TimZoet/ParserTongue"
 
@@ -16,7 +16,7 @@ class ParserTongueConan(ConanFile):
     ## Settings.                                                              ##
     ############################################################################
 
-    python_requires = "pyreq/1.0.0@timzoet/github_actions"
+    python_requires = "pyreq/1.0.0@timzoet/1.0.0"
     
     python_requires_extend = "pyreq.BaseConan"
     
