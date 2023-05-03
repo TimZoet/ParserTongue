@@ -1,5 +1,9 @@
 # Version History
 
+## 1.3.1 - TBD
+
+* Added default user and channel to conanfile.
+
 ## 1.3.0 - April 2023
 
 * Upgraded to Conan 2.0.
