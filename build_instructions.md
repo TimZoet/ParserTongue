@@ -1,5 +1,7 @@
 # Build Instructions
 
+**Note:** Most of these steps can be automated using the [devtools](https://github.com/TimZoet/devtools).
+
 ## Getting the Code
 
 To retrieve the code from GitHub:
